@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Progreso: Matemática C</title>
+    <!-- Tailwind CSS para diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti para efecto de éxito -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- MathJax para renderizado de fórmulas matemáticas -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax inicializado');
+                    });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Animaciones fluidas para la barra de progreso */
+        .progress-bar-transition {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Animación para el acordeón */
+        .accordion-content {
+            transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .accordion-content.open {
+            opacity: 1;
+        }
+
+        /* Estilo personalizado para el checkbox animado */
+        .custom-checkbox {
+            appearance: none;
+            background-color: #fff;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.3em;
+            height: 1.3em;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.35em;
+            display: grid;
+            place-content: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .custom-checkbox::before {
+            content: "";
+            width: 0.7em;
+            height: 0.7em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white;
+            background-color: transparent;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+
+        .custom-checkbox:checked {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+
+        .subtopic-row {
+            transition: all 0.2s ease;
+        }
+
+        .subtopic-row.checked {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 antialiased min-h-screen pb-12">
+
+    <!-- Header y Progreso Global (Sticky) -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200 pt-6 pb-4 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="book-open-check" class="text-indigo-600"></i>
+                    Matemática C - Temario
+                </h1>
+                <div class="text-lg font-medium text-slate-500 mt-2 md:mt-0">
+                    Progreso Global: <span id="global-percentage" class="text-indigo-600 font-bold">0%</span>
+                </div>
+            </div>
+
+            <!-- Barra de progreso global -->
+            <div class="w-full bg-slate-200 rounded-full h-3.5 mb-2 overflow-hidden shadow-inner">
+                <div id="global-progress-bar"
+                    class="bg-gradient-to-r from-indigo-500 to-purple-600 h-3.5 rounded-full progress-bar-transition w-0 relative">
+                    <div class="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+                </div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 font-medium">
+                <span>0%</span>
+                <span>100%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-6" id="modules-container">
+        <!-- Los módulos se renderizarán aquí mediante JavaScript -->
+    </main>
+
+    <script>
+        // --- 1. DATOS DEL TEMARIO DETALLADO ---
+        const temarioData = [
+            {
+                id: 'mod1',
+                title: 'Módulo 1: Vectores y Geometría Lineal',
+                icon: 'compass',
+                topics: [
+                    {
+                        title: '1. Introducción a los espacios coordenados',
+                        desc: 'Definición analítica y geométrica del plano $\\mathbb{R}^2$ y el espacio tridimensional $\\mathbb{R}^3$, planos coordenados y cálculo de distancia entre puntos usando el Teorema de Pitágoras.',
+                        subtopics: [
+                            { id: 'm1_t1_s1', title: 'Plano coordenado $\\mathbb{R}^2$ y abscisas/ordenadas', desc: 'Conjunto de todos los pares ordenados $(x,y)$ de números reales. El eje horizontal es el de abscisas (x) y el vertical el de ordenadas (y).' },
+                            { id: 'm1_t1_s2', title: 'Espacio coordenado $\\mathbb{R}^3$ y eje de cotas (z)', desc: 'Extensión a ternas ordenadas $(x,y,z)$ mediante un tercer eje (cota). Los tres ejes son mutuamente perpendiculares y siguen la regla de la mano derecha.' },
+                            { id: 'm1_t1_s3', title: 'Planos coordenados y regla de la mano derecha', desc: 'Cada par de ejes determina un plano: $xy$ (z=0), $xz$ (y=0), $yz$ (x=0). Dividen el espacio en ocho octantes. Una ecuación lineal representa un plano en $\\mathbb{R}^3$ (no una recta).' },
+                            { id: 'm1_t1_s4', title: 'Cálculo de la distancia entre puntos', desc: 'Generalización del Teorema de Pitágoras: $d(P_1,P_2)=\\sqrt{(x_2-x_1)^2+(y_2-y_1)^2+(z_2-z_1)^2}$.' }
+                        ]
+                    },
+                    {
+                        title: '2. Teoría de Vectores',
+                        desc: 'Diferenciación entre magnitudes escalares y vectoriales, y la distinción fundamental entre la ubicación estática de un punto y el desplazamiento definido por un vector en $\\mathbb{R}^n$.',
+                        subtopics: [
+                            { id: 'm1_t2_s1', title: 'Magnitudes escalares vs. vectoriales', desc: 'Un escalar es solo un número (temperatura, masa). Una vectorial requiere intensidad, dirección y sentido (fuerza, velocidad). Algebraicamente, un vector es una n-upla $\\langle v_1, v_2, \\dots, v_n \\rangle$.' },
+                            { id: 'm1_t2_s2', title: 'Distinción entre Puntos y Vectores', desc: 'Los puntos se denotan con paréntesis $(P)$ y representan ubicaciones fijas. Los vectores se denotan con corchetes angulares y representan desplazamientos; no tienen posición fija en el espacio.' },
+                            { id: 'm1_t2_s3', title: 'Cálculo del módulo o norma de un vector ($||\\vec{v}||$)', desc: 'Longitud geométrica del vector: $||\\vec{v}||=\\sqrt{v_1^2+v_2^2+\\cdots+v_n^2}$. Un vector de norma 1 se llama unitario.' },
+                            { id: 'm1_t2_s4', title: 'Vector de posición (ej. $\\vec{OP}$)', desc: 'Vector que une el origen $O$ con un punto $P$. Permite identificar cada punto del espacio con un vector único $\\vec{OP} = \\langle x, y, z \\rangle$.' },
+                            { id: 'm1_t2_s5', title: 'Vectores canónicos (versores $\\hat{i}, \\hat{j}, \\hat{k}$)', desc: 'Vectores unitarios que definen la orientación de cada eje coordenado. En $\\mathbb{R}^3$: $\\hat{i}=\\langle1,0,0\\rangle$, $\\hat{j}=\\langle0,1,0\\rangle$, $\\hat{k}=\\langle0,0,1\\rangle$. Cualquier vector se expresa como combinación de ellos.' }
+                        ]
+                    },
+                    {
+                        title: '3. Operaciones Vectoriales',
+                        desc: 'Operaciones algebraicas y geométricas con vectores, incluyendo suma, producto por escalar y productos entre vectores que permiten calcular ángulos y determinar perpendicularidad.',
+                        subtopics: [
+                            { id: 'm1_t3_s1', title: 'Suma de vectores (Regla del triángulo y paralelogramo)', desc: 'Se realiza componente a componente. Geométricamente, colocando el inicio de uno donde termina el otro (triángulo), o construyendo la diagonal del paralelogramo formado por ambos.' },
+                            { id: 'm1_t3_s2', title: 'Resta de vectores y vector desplazamiento', desc: 'La resta se define como $\\vec{v} - \\vec{w} = \\vec{v} + (-\\vec{w})$. El vector desplazamiento de $A$ hacia $B$ es $\\vec{AB} = \\vec{OB} - \\vec{OA}$, calculado como diferencia de posiciones.' },
+                            { id: 'm1_t3_s3', title: 'Producto por un escalar (Homogeneidad)', desc: 'Multiplica cada componente del vector por el escalar $k$, alterando su magnitud. Si $k<0$, invierte el sentido. La dirección se preserva. Permite escalar y combinar vectores.' },
+                            { id: 'm1_t3_s4', title: 'Vectores paralelos/colineales y combinación lineal', desc: 'Dos vectores son paralelos si uno es múltiplo escalar del otro: $\\vec{v} = \\alpha\\vec{w}$. Una combinación lineal es la suma $\\alpha_1\\vec{v_1} + \\alpha_2\\vec{v_2} + \\cdots$ con escalares arbitrarios.' },
+                            { id: 'm1_t3_s5', title: 'Producto Punto (Escalar) y cálculo de ángulo ($\\theta$)', desc: 'Retorna un número real: $\\vec{v}\\cdot\\vec{w} = v_1w_1+\\cdots+v_nw_n$. El ángulo entre vectores se obtiene con $\\cos(\\theta) = \\frac{\\vec{v}\\cdot\\vec{w}}{||\\vec{v}||\\cdot||\\vec{w}||}$.' },
+                            { id: 'm1_t3_s6', title: 'Condición de perpendicularidad ($\\vec{v} \\cdot \\vec{w} = 0$)', desc: 'Dos vectores son ortogonales (perpendiculares) si y solo si su producto punto es cero. Esto se deduce directamente de la fórmula del ángulo, ya que $\\cos(90°) = 0$.' },
+                            { id: 'm1_t3_s7', title: 'Producto Vectorial / Cruz (solo en $\\mathbb{R}^3$)', desc: 'Opera en $\\mathbb{R}^3$ y devuelve un vector perpendicular a los dos operandos, cuya dirección sigue la regla de la mano derecha. Su módulo es el área del paralelogramo formado. Se calcula como un determinante $3\\times3$.' },
+                            { id: 'm1_t3_s8', title: 'Dirección y Normalización de vectores', desc: 'Normalizar un vector es encontrar su versión unitaria: $\\hat{v} = \\frac{\\vec{v}}{||\\vec{v}||}$. El resultado tiene la misma dirección que $\\vec{v}$ pero norma igual a 1.' }
+                        ]
+                    },
+                    {
+                        title: '4. Geometría de Rectas y Planos',
+                        desc: 'Caracterización vectorial de elementos geométricos, pasando del concepto de pendiente al de vector director, y las ecuaciones que definen planos en el espacio.',
+                        subtopics: [
+                            { id: 'm1_t4_s1', title: 'Ecuación vectorial de la recta en $\\mathbb{R}^2$ y $\\mathbb{R}^3$', desc: 'Una recta queda determinada por un punto $P_0$ y un vector director $\\vec{d}$. La ecuación vectorial es $\\langle x,y,z \\rangle = \\langle x_0,y_0,z_0 \\rangle + t\\langle d_1,d_2,d_3 \\rangle$, con $t \\in \\mathbb{R}$.' },
+                            { id: 'm1_t4_s2', title: 'Ecuaciones paramétricas de la recta', desc: 'Escritura explícita de la ecuación vectorial separando cada coordenada: $x = x_0 + td_1$, $y = y_0 + td_2$, $z = z_0 + td_3$. El parámetro $t$ recorre todos los puntos de la recta.' },
+                            { id: 'm1_t4_s3', title: 'Posiciones relativas entre rectas (paralelas, secantes, alabeadas)', desc: 'En $\\mathbb{R}^2$: paralelas (coincidentes o no) o secantes. En $\\mathbb{R}^3$ aparece el caso de rectas alabeadas: no son paralelas entre sí, pero tampoco se intersectan (están en planos distintos).' },
+                            { id: 'm1_t4_s4', title: 'Ecuación del plano (punto-normal y general)', desc: 'Un plano queda determinado por un punto $P_0$ y un vector normal $\\vec{n}$ perpendicular a él. Ecuación general: $n_1x + n_2y + n_3z + n_0 = 0$.' },
+                            { id: 'm1_t4_s5', title: 'Determinación de un plano (3 puntos, 2 rectas secantes/paralelas)', desc: 'Un plano puede definirse a partir de tres puntos no alineados, dos rectas secantes, o dos rectas paralelas. En cada caso se obtiene el vector normal via producto vectorial.' },
+                            { id: 'm1_t4_s6', title: 'Posiciones relativas entre planos e intersección', desc: 'Dos planos pueden ser paralelos (sin intersección) o secantes (intersección en una recta). El vector director de esa recta de intersección es $\\vec{d} = \\vec{n_1} \\times \\vec{n_2}$.' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'mod2',
+                title: 'Módulo 2: Sistemas de Ecuaciones Lineales (SEL)',
+                icon: 'network',
+                topics: [
+                    {
+                        title: '1. Fundamentos de SEL',
+                        desc: 'Representación algebraica y matricial de un conjunto de ecuaciones lineales que deben satisfacerse simultáneamente.',
+                        subtopics: [
+                            { id: 'm2_t1_s1', title: 'Definición de ecuación lineal y soluciones', desc: 'Expresión $a_1x_1 + a_2x_2 + \\cdots + a_nx_n = b$ donde los $a_i$ son coeficientes y las $x_i$ son variables. Una solución es una n-upla que satisface todas las ecuaciones del sistema a la vez.' },
+                            { id: 'm2_t1_s2', title: 'Clasificación de sistemas (SCD, SCI, SI)', desc: 'Compatible Determinado (SCD): única solución. Compatible Indeterminado (SCI): infinitas soluciones (variables libres). Incompatible (SI): sin solución (aparece un absurdo como $0=2$).' },
+                            { id: 'm2_t1_s3', title: 'Interpretación geométrica (rectas y planos concurrentes)', desc: 'En $\\mathbb{R}^2$ cada ecuación es una recta; en $\\mathbb{R}^3$ es un plano. El SCD implica intersección en un punto único; el SCI en una recta o plano; el SI implica paralelismo sin intersección.' },
+                            { id: 'm2_t1_s4', title: 'Representación matricial ($Ax=b$) y matriz ampliada', desc: 'El sistema se compacta como $A \\cdot x = b$, donde $A$ es la matriz de coeficientes, $x$ el vector de incógnitas y $b$ el de términos independientes. La matriz ampliada $(A|b)$ incluye la columna $b$.' }
+                        ]
+                    },
+                    {
+                        title: '2. Resolución (Método de Gauss-Jordan)',
+                        desc: 'Procedimiento sistemático de aplicación de operaciones elementales para llevar la matriz ampliada a su forma escalonada y reducida por filas.',
+                        subtopics: [
+                            { id: 'm2_t2_s1', title: 'Sistemas equivalentes y operaciones elementales por filas', desc: 'Tres operaciones que producen sistemas equivalentes: intercambiar filas ($F_i \\leftrightarrow F_j$), multiplicar una fila por escalar no nulo ($F_i \\leftarrow \\alpha F_i$), y sumar a una fila un múltiplo de otra ($F_i \\leftarrow F_i + \\alpha F_j$).' },
+                            { id: 'm2_t2_s2', title: 'Matriz escalonada y reducida por filas (identificación de pivotes)', desc: 'La forma escalonada reducida exige: primer elemento no nulo de cada fila es 1 (pivote), cada pivote está a la derecha del anterior, y en la columna de cada pivote todos los demás elementos son 0.' },
+                            { id: 'm2_t2_s3', title: 'Variables ligadas (dependientes) vs. Variables libres (independientes)', desc: 'Las variables ligadas tienen pivote en su columna y quedan determinadas. Las libres no tienen pivote y pueden tomar valores arbitrarios, actuando como parámetros de la solución general.' },
+                            { id: 'm2_t2_s4', title: 'Cálculo de grados de libertad', desc: 'Los grados de libertad son la cantidad de variables libres: $n - r$, donde $n$ es el número de incógnitas y $r$ el rango (número de pivotes). Indican la dimensión del conjunto solución.' }
+                        ]
+                    },
+                    {
+                        title: '3. Análisis Estructural y Teorema de Rouché-Frobenius',
+                        desc: 'Análisis de compatibilidad e incompatibilidad a partir del rango de las matrices, y el comportamiento particular de los sistemas homogéneos.',
+                        subtopics: [
+                            { id: 'm2_t3_s1', title: 'Definición de rango de una matriz ($rg(A)$)', desc: 'El rango es el número de pivotes (filas no nulas) en la forma escalonada reducida. Mide la cantidad de ecuaciones linealmente independientes del sistema.' },
+                            { id: 'm2_t3_s2', title: 'Aplicación del Teorema de Rouché-Frobenius', desc: 'Compara $rg(A)$ con $rg(A|b)$: si son distintos → SI. Si iguales a $r$: SCD cuando $r=n$, o SCI cuando $r < n$. Es la herramienta principal para clasificar sistemas sin resolver.' },
+                            { id: 'm2_t3_s3', title: 'Sistemas homogéneos ($Ax=0$) y la solución trivial', desc: 'Un sistema homogéneo siempre tiene al menos la solución trivial $x = 0$, por lo que nunca es incompatible. Si $r < n$, tiene infinitas soluciones no triviales adicionales.' },
+                            { id: 'm2_t3_s4', title: 'Teorema de descomposición de la solución en SCI ($x_{gral} = x_p + x_h$)', desc: 'La solución general de $Ax = b$ se obtiene sumando una solución particular $x_p$ con la solución general del sistema homogéneo asociado $x_h$. Geométricamente, es una traslación del espacio nulo.' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'mod3',
+                title: 'Módulo 3: Determinantes e Inversas',
+                icon: 'grid-3x3',
+                topics: [
+                    {
+                        title: '1. Teoría de Determinantes',
+                        desc: 'Función escalar aplicada exclusivamente a matrices cuadradas, definida de forma recursiva (desarrollo por cofactores).',
+                        subtopics: [
+                            { id: 'm3_t1_s1', title: 'Definición y cálculo en matrices $1\\times1$ y $2\\times2$', desc: 'Para orden 1: $\\det([a]) = a$. Para orden 2: $\\det(A) = ad - bc$. Es el área con signo del paralelogramo definido por las filas.' },
+                            { id: 'm3_t1_s2', title: 'Cálculo para orden $3$ o superior (Desarrollo por cofactores/Laplace)', desc: 'Se elige una fila o columna y se expande: $\\det(A) = \\sum_j a_{ij} \\cdot C_{ij}$, donde $C_{ij} = (-1)^{i+j} M_{ij}$ es el cofactor y $M_{ij}$ el menor (determinante de la submatriz al eliminar fila $i$ y columna $j$).' },
+                            { id: 'm3_t1_s3', title: 'Propiedades: Matrices triangulares y con filas nulas', desc: 'El determinante de una matriz triangular (superior o inferior) es el producto de su diagonal. Si alguna fila (o columna) es nula, el determinante es 0.' },
+                            { id: 'm3_t1_s4', title: 'Propiedades: Determinante de traspuesta y producto matricial', desc: '$\\det(A^T) = \\det(A)$, por lo que las propiedades de filas valen también para columnas. $\\det(A \\cdot B) = \\det(A) \\cdot \\det(B)$: el determinante es multiplicativo.' },
+                            { id: 'm3_t1_s5', title: 'Efecto de las operaciones elementales de fila sobre el determinante', desc: 'Intercambiar dos filas cambia el signo. Multiplicar una fila por $\\alpha$ multiplica el det por $\\alpha$. Sumar un múltiplo de una fila a otra NO altera el determinante (clave para simplificar cálculos).' }
+                        ]
+                    },
+                    {
+                        title: '2. Inversibilidad y Aplicación en SEL',
+                        desc: 'Relación crítica entre el determinante de una matriz de coeficientes y la existencia de una solución única para sistemas cuadrados.',
+                        subtopics: [
+                            { id: 'm3_t2_s1', title: 'Condición de existencia de matriz inversa ($det(A) \\neq 0$)', desc: 'Una matriz cuadrada $A$ es invertible (no singular) si y solo si $\\det(A) \\neq 0$. Si $\\det(A) = 0$, la matriz es singular y no tiene inversa.' },
+                            { id: 'm3_t2_s2', title: 'Determinante de la matriz inversa ($det(A^{-1}) = \\frac{1}{det(A)}$)', desc: 'Se deduce de $\\det(A \\cdot A^{-1}) = \\det(I) = 1$, lo que implica $\\det(A) \\cdot \\det(A^{-1}) = 1$, entonces $\\det(A^{-1}) = 1/\\det(A)$.' },
+                            { id: 'm3_t2_s3', title: 'Cálculo de matriz inversa ampliando con la identidad $(A|I)$', desc: 'Se aplica Gauss-Jordan a la matriz ampliada $(A|I)$ hasta obtener $(I|A^{-1})$. Si $A$ no es invertible, el proceso se detiene al aparecer una fila de ceros en el lado de $A$.' },
+                            { id: 'm3_t2_s4', title: 'Resolución de sistemas mediante la forma $x = A^{-1}b$', desc: 'Cuando $\\det(A) \\neq 0$, el sistema cuadrado $Ax = b$ tiene solución única: $x = A^{-1}b$. Útil teóricamente, aunque Gauss-Jordan suele ser más eficiente computacionalmente.' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'mod4',
+                title: 'Módulo 4: Estructuras Algebraicas y Espacios Vectoriales',
+                icon: 'box',
+                topics: [
+                    {
+                        title: '1. Estructuras Algebraicas Preliminares',
+                        desc: 'Conceptos fundamentales sobre conjuntos dotados de operaciones internas con propiedades específicas, sentando la base para definir cuerpos numéricos.',
+                        subtopics: [
+                            { id: 'm4_t1_s1', title: 'Operaciones binarias y unarias', desc: 'Una operación binaria toma dos elementos del conjunto y devuelve uno del mismo conjunto (cerradura). Una unaria opera sobre un solo elemento (ej: inverso aditivo $-a$, inverso multiplicativo $a^{-1}$).' },
+                            { id: 'm4_t1_s2', title: 'Estructura de Grupo y Grupo Abeliano', desc: 'Un Grupo es un conjunto con una operación cerrada, asociativa, con elemento neutro y elemento opuesto para cada miembro. Si además la operación es conmutativa, se llama Grupo Abeliano.' },
+                            { id: 'm4_t1_s3', title: 'Estructura de Anillo', desc: 'Un Anillo tiene dos operaciones: la suma forma un grupo abeliano, y el producto es cerrado, asociativo y distributivo respecto a la suma. No requiere inverso multiplicativo ni conmutatividad del producto.' },
+                            { id: 'm4_t1_s4', title: 'Definición de Cuerpo (ej. números reales $\\mathbb{R}$)', desc: 'Un Cuerpo $\\mathbb{K}$ es un conjunto con suma y producto donde ambas operaciones (excluyendo el 0 en el producto) forman grupos abelianos. $\\mathbb{Q}$ y $\\mathbb{R}$ son los ejemplos más comunes.' }
+                        ]
+                    },
+                    {
+                        title: '2. Espacios y Subespacios Vectoriales',
+                        desc: 'Definición rigurosa de un conjunto de vectores estructurado sobre un cuerpo de escalares, y las condiciones para que un subconjunto herede esta estructura.',
+                        subtopics: [
+                            { id: 'm4_t2_s1', title: 'Definición formal de espacio vectorial y sus 10 axiomas', desc: 'Estructura $(V, +, \\mathbb{K}, \\cdot)$ que satisface 5 axiomas de la suma (cerradura, asociatividad, neutro, inverso, conmutatividad) y 5 del producto por escalar (cerradura, dos distributivas, asociatividad mixta e identidad $1u=u$).' },
+                            { id: 'm4_t2_s2', title: 'Ejemplos clásicos (espacio trivial, polinomios $P_n$)', desc: 'El espacio trivial $\\{0\\}$ (dimensión 0), $\\mathbb{R}^n$ (dimensión $n$), espacio de polinomios de grado $\\le n$ ($P_n$, dimensión $n+1$), y el espacio de matrices $M_{m\\times n}$.' },
+                            { id: 'm4_t2_s3', title: 'Definición de Subespacio vectorial (3 condiciones prácticas)', desc: 'Un subconjunto no vacío $S \\subseteq V$ es subespacio si: (1) $0 \\in S$, (2) es cerrado bajo la suma ($u,v \\in S \\Rightarrow u+v \\in S$), (3) es cerrado bajo producto por escalar ($u \\in S, \\alpha \\in \\mathbb{K} \\Rightarrow \\alpha u \\in S$).' },
+                            { id: 'm4_t2_s4', title: 'Análisis del espacio nulo de una matriz ($N(A)$)', desc: 'El conjunto de soluciones del sistema homogéneo $Av = 0$ siempre es un subespacio de $\\mathbb{R}^n$. Su dimensión es igual a los grados de libertad ($n - rg(A)$).' }
+                        ]
+                    },
+                    {
+                        title: '3. Dependencia, Base y Dimensión',
+                        desc: 'Estudio de conjuntos de vectores que pueden generar a todo el espacio mediante combinaciones lineales, sin redundancias.',
+                        subtopics: [
+                            { id: 'm4_t3_s1', title: 'Conjunto generador y Espacio generado ($gen(M)$)', desc: 'Un conjunto $M$ genera a $V$ si todo vector de $V$ se puede escribir como combinación lineal de los vectores de $M$. El $gen(M)$ es el subconjunto más pequeño que contiene a $M$ cerrado bajo combinaciones lineales.' },
+                            { id: 'm4_t3_s2', title: 'Independencia vs. Dependencia Lineal (L.I. / L.D.)', desc: 'Un conjunto es L.I. si la única combinación lineal que da el vector nulo es la trivial (todos los escalares iguales a cero). Si existe otra combinación no trivial, el conjunto es L.D. (hay vectores redundantes).' },
+                            { id: 'm4_t3_s3', title: 'Criterio del determinante para verificar L.I.', desc: 'Para $n$ vectores en $\\mathbb{R}^n$, se forma la matriz poniéndolos como filas o columnas. Si $\\det(A) \\neq 0$ → L.I. Si $\\det(A) = 0$ → L.D. Solo aplica cuando la cantidad de vectores iguala la dimensión del espacio.' },
+                            { id: 'm4_t3_s4', title: 'Definición de Base y cálculo de Dimensión ($dim(V)$)', desc: 'Una base de $V$ es un conjunto L.I. que genera a $V$. Toda base de un mismo espacio tiene igual cantidad de vectores, y esa cantidad es la dimensión $dim(V)$. Ejemplo: $dim(\\mathbb{R}^n) = n$.' },
+                            { id: 'm4_t3_s5', title: 'Variedades lineales (solución no homogénea como traslación)', desc: 'Una variedad lineal es el conjunto solución de $Ax = b$ (no homogéneo): $V_L = x_p + N(A)$. No es un subespacio (no contiene al origen), sino una traslación del espacio nulo paralela a él.' }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // --- 2. ESTADO DE LA APLICACIÓN ---
+        let appState = JSON.parse(localStorage.getItem('mateC_progress_v2')) || {};
+        let completedModules = JSON.parse(localStorage.getItem('mateC_completedModules_v2')) || {};
+
+        // --- 3. FUNCIONES DE RENDERIZADO ---
+        function renderChecklist() {
+            const container = document.getElementById('modules-container');
+            container.innerHTML = '';
+
+            temarioData.forEach((mod) => {
+                // Calcular progreso inicial del módulo basado en SUBTEMAS
+                let totalSubtopics = 0;
+                let checkedSubtopics = 0;
+
+                mod.topics.forEach(topic => {
+                    topic.subtopics.forEach(sub => {
+                        totalSubtopics++;
+                        if (appState[sub.id]) checkedSubtopics++;
+                    });
+                });
+
+                const modProgress = totalSubtopics === 0 ? 0 : Math.round((checkedSubtopics / totalSubtopics) * 100);
+
+                // Crear HTML del módulo
+                const modEl = document.createElement('div');
+                modEl.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow';
+
+                let topicsHtml = mod.topics.map(topic => {
+                    let subtopicsHtml = topic.subtopics.map(sub => {
+                        const isChecked = appState[sub.id] ? 'checked' : '';
+                        const rowClass = isChecked ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-slate-200 text-slate-700';
+
+                        return `
+                        <label class="subtopic-row ${rowClass} flex items-start gap-3 p-3 ml-2 sm:ml-6 rounded-lg border cursor-pointer hover:border-indigo-300 shadow-sm text-sm" id="row-${sub.id}">
+                            <div class="pt-0.5 shrink-0">
+                                <input type="checkbox" class="custom-checkbox" 
+                                       id="${sub.id}" 
+                                       ${isChecked}
+                                       onchange="handleCheck('${sub.id}', '${mod.id}')">
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium">${sub.title}</div>
+                                ${sub.desc ? `<p class="text-xs mt-1 opacity-60 italic font-normal leading-relaxed">${sub.desc}</p>` : ''}
+                            </div>
+                        </label>
+                        `;
+                    }).join('');
+
+                    return `
+                    <div class="mb-6 last:mb-0">
+                        <div class="mb-3">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                ${topic.title}
+                            </h3>
+                            <p class="text-sm text-slate-500 mt-1 ml-4 border-l-2 border-indigo-100 pl-3 italic">${topic.desc}</p>
+                        </div>
+                        <div class="space-y-2">
+                            ${subtopicsHtml}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+                modEl.innerHTML = `
+                    <!-- Cabecera del Acordeón -->
+                    <button onclick="toggleAccordion('content-${mod.id}', 'icon-${mod.id}')" 
+                            class="w-full px-4 sm:px-6 py-5 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors focus:outline-none">
+                        <div class="flex items-center gap-4 text-left">
+                            <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg hidden sm:block">
+                                <i data-lucide="${mod.icon}"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-lg sm:text-xl font-semibold text-slate-800">${mod.title}</h2>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <div class="w-24 sm:w-32 bg-slate-200 rounded-full h-2">
+                                        <div id="bar-${mod.id}" class="bg-indigo-500 h-2 rounded-full progress-bar-transition" style="width: ${modProgress}%"></div>
+                                    </div>
+                                    <span id="text-${mod.id}" class="text-xs sm:text-sm font-medium text-slate-500">${modProgress}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" id="icon-${mod.id}" class="text-slate-400 transition-transform duration-300"></i>
+                    </button>
+
+                    <!-- Contenido del Acordeón -->
+                    <div id="content-${mod.id}" class="accordion-content border-t border-slate-100 bg-white">
+                        <div class="p-4 sm:p-6">
+                            ${topicsHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(modEl);
+            });
+
+            lucide.createIcons();
+            updateGlobalProgress();
+
+            // Forzar a MathJax a re-renderizar todo el contenido matemático inyectado dinámicamente
+            if (window.MathJax) {
+                MathJax.typesetPromise().catch(function (err) {
+                    console.error('Error de renderizado de MathJax:', err.message);
+                });
+            }
+        }
+
+        // --- 4. LÓGICA DE INTERACCIÓN ---
+
+        function toggleAccordion(contentId, iconId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+
+            const isOpen = content.classList.contains('open');
+
+            if (isOpen) {
+                // Fijar el alto actual antes de animar al cierre
+                content.style.maxHeight = content.scrollHeight + 'px';
+                requestAnimationFrame(() => {
+                    content.style.maxHeight = '0';
+                });
+                content.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                content.style.maxHeight = content.scrollHeight + 'px';
+                icon.style.transform = 'rotate(180deg)';
+                // Limpiar el inline style al terminar la transición para evitar
+                // que el acordeón quede con altura fija si el contenido cambia
+                content.addEventListener('transitionend', () => {
+                    if (content.classList.contains('open')) {
+                        content.style.maxHeight = 'none';
+                    }
+                }, { once: true });
+            }
+        }
+
+        function handleCheck(subtopicId, modId) {
+            const checkbox = document.getElementById(subtopicId);
+            const row = document.getElementById(`row-${subtopicId}`);
+
+            // Actualizar estado
+            appState[subtopicId] = checkbox.checked;
+
+            // Efecto visual en la fila del subtema
+            if (checkbox.checked) {
+                row.classList.add('bg-green-50', 'border-green-200', 'text-green-800');
+                row.classList.remove('bg-white', 'border-slate-200', 'text-slate-700');
+            } else {
+                row.classList.remove('bg-green-50', 'border-green-200', 'text-green-800');
+                row.classList.add('bg-white', 'border-slate-200', 'text-slate-700');
+            }
+
+            // Guardar progreso en localStorage
+            localStorage.setItem('mateC_progress_v2', JSON.stringify(appState));
+
+            updateModuleProgress(modId);
+            updateGlobalProgress();
+        }
+
+        function updateModuleProgress(modId) {
+            const mod = temarioData.find(m => m.id === modId);
+            let totalSubtopics = 0;
+            let checkedSubtopics = 0;
+
+            mod.topics.forEach(topic => {
+                topic.subtopics.forEach(sub => {
+                    totalSubtopics++;
+                    if (appState[sub.id]) checkedSubtopics++;
+                });
+            });
+
+            const percentage = totalSubtopics === 0 ? 0 : Math.round((checkedSubtopics / totalSubtopics) * 100);
+
+            // Actualizar interfaz del módulo
+            document.getElementById(`bar-${modId}`).style.width = `${percentage}%`;
+            document.getElementById(`text-${modId}`).innerText = `${percentage}%`;
+
+            // Verificación para confeti (100%)
+            if (percentage === 100) {
+                document.getElementById(`bar-${modId}`).classList.remove('bg-indigo-500');
+                document.getElementById(`bar-${modId}`).classList.add('bg-green-500');
+
+                if (!completedModules[modId]) {
+                    fireConfetti();
+                    completedModules[modId] = true;
+                    localStorage.setItem('mateC_completedModules_v2', JSON.stringify(completedModules));
+                }
+            } else {
+                document.getElementById(`bar-${modId}`).classList.remove('bg-green-500');
+                document.getElementById(`bar-${modId}`).classList.add('bg-indigo-500');
+                completedModules[modId] = false;
+                localStorage.setItem('mateC_completedModules_v2', JSON.stringify(completedModules));
+            }
+        }
+
+        function updateGlobalProgress() {
+            let totalSubtopics = 0;
+            let checkedSubtopics = 0;
+
+            temarioData.forEach(mod => {
+                mod.topics.forEach(topic => {
+                    topic.subtopics.forEach(sub => {
+                        totalSubtopics++;
+                        if (appState[sub.id]) checkedSubtopics++;
+                    });
+                });
+            });
+
+            const globalPercentage = totalSubtopics === 0 ? 0 : Math.round((checkedSubtopics / totalSubtopics) * 100);
+
+            const progressBar = document.getElementById('global-progress-bar');
+            progressBar.style.width = `${globalPercentage}%`;
+            document.getElementById('global-percentage').innerText = `${globalPercentage}%`;
+
+            if (globalPercentage === 100) {
+                progressBar.classList.remove('from-indigo-500', 'to-purple-600');
+                progressBar.classList.add('from-green-400', 'to-green-600');
+            } else {
+                progressBar.classList.remove('from-green-400', 'to-green-600');
+                progressBar.classList.add('from-indigo-500', 'to-purple-600');
+            }
+        }
+
+        function fireConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function () {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, {
+                    particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                }));
+                confetti(Object.assign({}, defaults, {
+                    particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                }));
+            }, 250);
+        }
+
+        // --- 5. INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderChecklist();
+
+            // Forzar colores correctos inicialmente
+            temarioData.forEach(mod => updateModuleProgress(mod.id));
+
+            // Desplegar el primer módulo al arrancar
+            setTimeout(() => {
+                toggleAccordion('content-mod1', 'icon-mod1');
+            }, 500);
+        });
+    </script>
+</body>
+
+</html>
